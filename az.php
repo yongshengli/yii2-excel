@@ -1,7 +1,7 @@
 <?php
 
 /**
- * cls_az.php
+ * az.php
  * @author: liyongsheng
  * @email： liyongsheng@huimai365.com
  * @date: 2015/1/15
