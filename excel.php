@@ -1,7 +1,7 @@
 <?php
 
 /**
- * cls_php_excel.php
+ * excel.php
  * @author: liyongsheng
  * @email： liyongsheng@huimai365.com
  * @date: 2015/1/15
