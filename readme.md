@@ -4,7 +4,7 @@ phpexcle 写入扩展类依赖phpexcel(https://github.com/PHPOffice/PHPExcel)
 
 用法例子
 ```
-$arr = [
+$fieltMap = [
     [
         'name'=>'id',
         'text'=>'ID'
@@ -18,6 +18,23 @@ $arr = [
         'text'=>'价格'
     ],
 ];
+$data = [
+    [
+        'id' => 1,
+        'name'=>'名称1',
+        'price'=>13,
+    ],
+    [
+        'id' => 2,
+        'name'=>'名称2',
+        'price'=>13,
+    ],
+    [
+        'id' => 3,
+        'name'=>'名称3',
+        'price'=>23,
+    ],
+];
 $fileName = 'demo.xlsx';
-(new Excel())->setFieldMap($arr)->download($fileName, $res['rows']);
+(new Excel())->setFieldMap($fieltMap)->download($fileName, $data);
 ```
