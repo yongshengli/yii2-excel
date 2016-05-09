@@ -1,66 +1,68 @@
 <?php
 
 /**
- * excel.php
- * @author: liyongsheng
- * @email： liyongsheng@huimai365.com
- * @date: 2015/1/15
-*/
-
-require_once 'PHPExcel.php';
-require_once 'manage/includes/az.php';
-
-/**
- * Class excel
+ * Created by PhpStorm.
+ * User: david
+ * Date: 16/5/5
+ * Time: 17:44
+ * Email:liyongsheng@meicai.cn
  */
-class excel extends PHPExcel
+class Excel
 {
-
-    private $azMap = array();
+    private $_fieldMap =[];
 
     /**
+     * @param $arr
+     * @return $this
+     */
+    public function setFieldMap($arr)
+    {
+        $this->_fieldMap = $arr;
+        return $this;
+    }
+
+    /**
+     * 导出
+     * @param string $fileName
      * @param array $data
+     * @throws CException
+     * @throws PHPExcel_Exception
+     * @throws PHPExcel_Reader_Exception
      */
-    public function setAZMap(array $data)
+    public function download($fileName, $data=array())
     {
-        $this->azMap = AZ::getAZ($data);
-    }
-
-    /**
-     * 生成excel 标题行
-     * @param array|arrayObject $data
-     * @param int $line 标题所在的行
-     * @throws Exception
-     */
-    public function createTitle($data, $line=1)
-    {
-        if(empty($this->azMap)){
-            $this->setAZMap($data);
+        if(empty($this->_fieldMap)){
+            throw new CException('fieldMap 未设置');
         }
-        $activeSheet = $this->setActiveSheetIndex(0);
-        foreach($data as $key=>$val){
-            $activeSheet->setCellValue($this->azMap[$key].$line, $val);
+        // Redirect output to a client’s web browser (Excel2007)
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $fileName . '"');
+        header('Cache-Control: max-age=0');
+        // If you're serving to IE 9, then the following may be needed
+        header('Cache-Control: max-age=1');
+        // If you're serving to IE over SSL, then the following may be needed
+        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT'); // Date in the past
+        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT'); // always modified
+        header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
+        header('Pragma: public'); // HTTP/1.0
+
+        $objPHPExcel = new PHPExcel();
+        $worksheetObj = $objPHPExcel->setActiveSheetIndex(0);
+        for ($i = 0; $i < count($this->_fieldMap); $i++) {
+            $this->_fieldMap[$i]['cell'] = PHPExcel_Cell::stringFromColumnIndex($i);
+            $worksheetObj->setCellValue($this->_fieldMap[$i]['cell'] . '1', $this->_fieldMap[$i]['text']);
         }
-    }
-
-    /**
-     * 生成body
-     * @param array|arrayObject $data
-     * @param int $line 内容的起始行
-     * @throws Exception
-     */
-    public function createBody($data, $line=2)
-    {
-        $activeSheet = $this->setActiveSheetIndex(0);
-
-        foreach($data as $row){
-            foreach ($row as $key=>$val){
-                if(isset($this->azMap[$key])){
-                    $activeSheet->setCellValue($this->azMap[$key].$line, $val);
+        $row = 2;
+        foreach ($data as $item) {
+            foreach ($this->_fieldMap as $field) {
+                if (isset($item[$field['name']])) {
+                    $worksheetObj->setCellValue($field['cell'] . $row, $item[$field['name']]);
                 }
             }
-            $line++;
+            $row++;
         }
-    }
 
+        $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+        $objWriter->save('php://output');
+    }
 }
