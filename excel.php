@@ -7,20 +7,128 @@
  * Time: 17:44
  * Email:liyongsheng@meicai.cn
  */
-class Excel
+
+/**
+ * Class Excel
+ *
+ * @property int $activeSheetIndex
+ * @method addSheet() addSheet(PHPExcel_Worksheet $pSheet, $iSheetIndex = null)
+ */
+class Excel extends CComponent
 {
-    private $_fieldMap =[];
+    /**
+     * 当前行
+     * @var int
+     */
+    public $row = [];
 
     /**
-     * @param $arr
+     * PHPExcel
+     * @var null
+     */
+    public $phpExcel = null;
+
+    /**
+     * 字段map
+     * @var array
+     */
+    private $_fieldMap =[];
+
+    public function __construct()
+    {
+        $this->phpExcel = new PHPExcel();
+    }
+
+    /**
+     * @param array $arr
+     * @param int $activeSheetIndex 当前工作簿
      * @return $this
      */
-    public function setFieldMap($arr)
+    public function setFieldMap(array $arr, $activeSheetIndex=null)
     {
-        $this->_fieldMap = $arr;
+        if($activeSheetIndex !==null){
+            $this->activeSheetIndex = $activeSheetIndex;
+        }
+        for ($i = 0; $i < count($arr); $i++) {
+            $arr[$i]['cell'] = PHPExcel_Cell::stringFromColumnIndex($i);
+        }
+        $this->_fieldMap[$this->activeSheetIndex] = $arr;
+        $this->row[$this->activeSheetIndex] = 1;
         return $this;
     }
 
+    /**
+     * 获取 字段映射map
+     * @return mixed
+     */
+    public function getFieldMap()
+    {
+        if(isset($this->_fieldMap[$this->activeSheetIndex])){
+            return $this->_fieldMap[$this->activeSheetIndex];
+        }else{
+            return null;
+        }
+    }
+    /**
+     * 设置空行
+     * 设置当前行
+     *
+     * @param int $num
+     * @return $this
+     */
+    public function rowIncrease($num=1)
+    {
+        $this->row[$this->activeSheetIndex] +=$num;
+        return $this;
+    }
+
+    /**
+     * 当前行
+     */
+    public function currentRow()
+    {
+        return $this->row[$this->activeSheetIndex];
+    }
+    /**
+     * 写入头信息
+     * @return $this
+     */
+    public function writeHeader()
+    {
+        $worksheetObj = $this->phpExcel->setActiveSheetIndex($this->activeSheetIndex);
+        $fieldNum  = count($this->fieldMap);
+        for ($i = 0; $i < $fieldNum; $i++) {
+            $worksheetObj->setCellValue($this->fieldMap[$i]['cell'] . $this->currentRow(), $this->fieldMap[$i]['text']);
+        }
+        $this->rowIncrease();
+        return $this;
+    }
+    /**
+     * 设置数据
+     * @param array $data
+     * @param bool $withHeader 是否需要写入头
+     * @return $this
+     * @throws PHPExcel_Exception
+     */
+    public function setData(array $data=array(), $withHeader=true)
+    {
+        if(empty($data)){
+            return $this;
+        }
+        if($withHeader) {
+            $this->writeHeader();
+        }
+        $worksheetObj = $this->phpExcel->setActiveSheetIndex($this->activeSheetIndex);
+        foreach ($data as $item) {
+            foreach ($this->fieldMap as $field) {
+                if (isset($item[$field['name']])) {
+                    $worksheetObj->setCellValue($field['cell'] . $this->currentRow(), $item[$field['name']]);
+                }
+            }
+            $this->rowIncrease();
+        }
+        return $this;
+    }
     /**
      * 导出
      * @param string $fileName
@@ -46,23 +154,38 @@ class Excel
         header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
         header('Pragma: public'); // HTTP/1.0
 
-        $objPHPExcel = new PHPExcel();
-        $worksheetObj = $objPHPExcel->setActiveSheetIndex(0);
-        for ($i = 0; $i < count($this->_fieldMap); $i++) {
-            $this->_fieldMap[$i]['cell'] = PHPExcel_Cell::stringFromColumnIndex($i);
-            $worksheetObj->setCellValue($this->_fieldMap[$i]['cell'] . '1', $this->_fieldMap[$i]['text']);
-        }
-        $row = 2;
-        foreach ($data as $item) {
-            foreach ($this->_fieldMap as $field) {
-                if (isset($item[$field['name']])) {
-                    $worksheetObj->setCellValue($field['cell'] . $row, $item[$field['name']]);
-                }
-            }
-            $row++;
-        }
+        $this->setData($data);
 
-        $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+        $objWriter = PHPExcel_IOFactory::createWriter($this->phpExcel, 'Excel2007');
         $objWriter->save('php://output');
+    }
+    /**
+     * @param $activeSheetIndex
+     * @return $this
+     */
+    public function setActiveSheetIndex($activeSheetIndex=0)
+    {
+        $this->phpExcel->setActiveSheetIndex($activeSheetIndex);
+        return $this;
+    }
+    
+    /**
+     * 获取当前工作簿
+     * @return int
+     */
+    public function getActiveSheetIndex()
+    {
+        return $this->phpExcel->getActiveSheetIndex();
+    }
+
+    /**
+     * 魔术方法
+     * @param string $method
+     * @param array $params
+     * @return mixed
+     */
+    public function __call($method, $params)
+    {
+        return call_user_func_array([$this->phpExcel, $method], $params);
     }
 }
