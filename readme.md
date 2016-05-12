@@ -1,6 +1,6 @@
 excel
 ============================================
-phpexcle 写入扩展类依赖phpexcel(https://github.com/PHPOffice/PHPExcel)
+phpexcle 写入扩展类 依赖phpexcel(https://github.com/PHPOffice/PHPExcel) 和yii 1.0
 
 用法例子
 ```
@@ -37,4 +37,6 @@ $data = [
 ];
 $fileName = 'demo.xlsx';
 (new Excel())->setFieldMap($fieltMap)->download($fileName, $data);
+//(new Excel())->setFieldMap($fieltMap)->setData($data)->download($fileName);
+//(new Excel())->setFieldMap($fieldMap1)->setData($data1)->setFieldMap($fieldMap2)->setData($data2)->download('filename');
 ```
