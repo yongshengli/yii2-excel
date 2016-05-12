@@ -12,8 +12,6 @@
  * Class Excel
  *
  * @property int $activeSheetIndex
- * @method addSheet(PHPExcel_Worksheet $pSheet, $iSheetIndex = null) 添加工作簿
- * @method getActiveSheetIndex() 获取当前工作簿索引
  * @method getSheet($pIndex = 0) 根据指定索引获取工作簿
  * @method getActiveSheet() 获取当前工作簿
  * @method getSheetByName($pName = '')
@@ -182,6 +180,27 @@ class Excel extends CComponent
     public function setActiveSheetIndexByName($pValue = '')
     {
         $this->phpExcel->setActiveSheetIndexByName($pValue);
+        return $this;
+    }
+
+    /**
+     * 获取当前工作簿索引
+     */
+    public function getActiveSheetIndex(){
+        return $this->phpExcel->getActiveSheetIndex();
+    }
+
+    /**
+     * 添加工作簿
+     * @param PHPExcel_Worksheet $pSheet
+     * @param null $iSheetIndex
+     * @return $this
+     * @throws PHPExcel_Exception
+     */
+    public function addSheet(PHPExcel_Worksheet $pSheet, $iSheetIndex = null)
+    {
+        $this->phpExcel->addSheet($pSheet, $iSheetIndex);
+        $this->phpExcel->setActiveSheetIndex($iSheetIndex);
         return $this;
     }
     /**
