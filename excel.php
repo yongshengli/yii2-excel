@@ -1,12 +1,17 @@
 <?php
-
 /**
  * Created by PhpStorm.
  * User: david
- * Date: 16/5/5
- * Time: 17:44
+ * Date: 2017/3/31
+ * Time: 18:05
  * Email:liyongsheng@meicai.cn
  */
+
+namespace app\components;
+use yii\base\Component;
+use PHPExcel;
+use PHPExcel_Cell;
+use yii\base\Exception;
 
 /**
  * Class Excel
@@ -16,7 +21,7 @@
  * @method getActiveSheet() 获取当前工作簿
  * @method getSheetByName($pName = '')
  */
-class Excel extends CComponent
+class Excel extends Component
 {
     /**
      * 当前行
@@ -25,8 +30,7 @@ class Excel extends CComponent
     public $row = [];
 
     /**
-     * PHPExcel
-     * @var null
+     * @var \PHPExcel
      */
     public $phpExcel = null;
 
@@ -36,8 +40,9 @@ class Excel extends CComponent
      */
     private $_fieldMap =[];
 
-    public function __construct()
+    public function init()
     {
+        parent::init();
         $this->phpExcel = new PHPExcel();
     }
 
@@ -110,7 +115,7 @@ class Excel extends CComponent
      * @param array $data
      * @param bool $withHeader 是否需要写入头
      * @return $this
-     * @throws PHPExcel_Exception
+     * @throws \PHPExcel_Exception
      */
     public function setData(array $data=array(), $withHeader=true)
     {
@@ -124,6 +129,9 @@ class Excel extends CComponent
         foreach ($data as $item) {
             foreach ($this->fieldMap as $field) {
                 if (isset($item[$field['name']])) {
+                    if(isset($field['func'])){
+                        $item[$field['name']] = call_user_func_array($field['func'], [$item[$field['name']]]);
+                    }
                     $worksheetObj->setCellValue($field['cell'] . $this->currentRow(), $item[$field['name']]);
                 }
             }
@@ -135,14 +143,14 @@ class Excel extends CComponent
      * 导出
      * @param string $fileName
      * @param array $data
-     * @throws CException
-     * @throws PHPExcel_Exception
-     * @throws PHPExcel_Reader_Exception
+     * @throws Exception
+     * @throws \PHPExcel_Exception
+     * @throws \PHPExcel_Reader_Exception
      */
     public function download($fileName, $data=array())
     {
         if(empty($this->_fieldMap)){
-            throw new CException('fieldMap 未设置');
+            throw new Exception('fieldMap 未设置');
         }
         // Redirect output to a client’s web browser (Excel2007)
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -158,7 +166,7 @@ class Excel extends CComponent
 
         $this->setData($data);
 
-        $objWriter = PHPExcel_IOFactory::createWriter($this->phpExcel, 'Excel2007');
+        $objWriter = \PHPExcel_IOFactory::createWriter($this->phpExcel, 'Excel2007');
         $objWriter->save('php://output');
     }
     /**
@@ -174,7 +182,7 @@ class Excel extends CComponent
     /**
      * 设置当前活动工作簿索引
      * @param string $pValue
-     * @throws PHPExcel_Exception
+     * @throws \PHPExcel_Exception
      * @return $this
      */
     public function setActiveSheetIndexByName($pValue = '')
@@ -192,12 +200,12 @@ class Excel extends CComponent
 
     /**
      * 添加工作簿
-     * @param PHPExcel_Worksheet $pSheet
+     * @param \PHPExcel_Worksheet $pSheet
      * @param null $iSheetIndex
      * @return $this
-     * @throws PHPExcel_Exception
+     * @throws \PHPExcel_Exception
      */
-    public function addSheet(PHPExcel_Worksheet $pSheet, $iSheetIndex = null)
+    public function addSheet(\PHPExcel_Worksheet $pSheet, $iSheetIndex = null)
     {
         $this->phpExcel->addSheet($pSheet, $iSheetIndex);
         $this->phpExcel->setActiveSheetIndex($iSheetIndex);
