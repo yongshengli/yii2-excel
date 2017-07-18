@@ -17,6 +17,7 @@ use yii\base\Exception;
  * Class Excel
  *
  * @property int $activeSheetIndex
+ * @property array $fieldMap
  * @method getSheet($pIndex = 0) 根据指定索引获取工作簿
  * @method getActiveSheet() 获取当前工作簿
  * @method getSheetByName($pName = '')
@@ -102,6 +103,14 @@ class Excel extends Component
      */
     public function writeHeader()
     {
+        $this->phpExcel->getProperties()->setCreator("David Lee")
+            ->setLastModifiedBy("David Lee")
+            ->setTitle("Office 2007 XLSX")
+            ->setSubject("Office 2007 XLSX")
+            ->setDescription("Test document for Office 2007 XLSX, generated using PHP classes.")
+            ->setKeywords("office 2007 openxml php")
+            ->setCategory("Bss result file");
+
         $worksheetObj = $this->phpExcel->setActiveSheetIndex($this->activeSheetIndex);
         $fieldNum  = count($this->fieldMap);
         for ($i = 0; $i < $fieldNum; $i++) {
@@ -152,6 +161,10 @@ class Excel extends Component
         if(empty($this->_fieldMap)){
             throw new Exception('fieldMap 未设置');
         }
+        $this->setData($data);
+
+        // Set active sheet index to the first sheet, so Excel opens this as the first sheet
+        $this->setActiveSheetIndex(0);
         // Redirect output to a client’s web browser (Excel2007)
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $fileName . '"');
@@ -163,8 +176,6 @@ class Excel extends Component
         header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT'); // always modified
         header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
         header('Pragma: public'); // HTTP/1.0
-
-        $this->setData($data);
 
         $objWriter = \PHPExcel_IOFactory::createWriter($this->phpExcel, 'Excel2007');
         $objWriter->save('php://output');
