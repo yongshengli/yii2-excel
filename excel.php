@@ -168,6 +168,7 @@ class Excel extends Component
 
         $objWriter = \PHPExcel_IOFactory::createWriter($this->phpExcel, 'Excel2007');
         $objWriter->save('php://output');
+        exit;
     }
     /**
      * @param $activeSheetIndex
